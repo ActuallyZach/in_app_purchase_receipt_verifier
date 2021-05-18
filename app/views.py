@@ -52,3 +52,71 @@ def verify_receipt(request):
 
     return response
 
+def verify_receipt_scum(request):
+    data = {
+        'receipt-data': request.body.strip().decode("utf-8"),
+        'password': settings.APP_SPECIFIC_SHARED_SECRET_SCUM
+    }
+    response = requests.post(settings.RECEIPT_VERIFICATION_URL_SCUM, data=json.dumps(data))
+    payload = response.json()
+    response = JSONResponse(payload)
+
+    # If signing key is available, sign the payload to detect potential tampering.
+    if settings.BASE64_ENCODED_SIGNING_KEY_SCUM:
+        key_data = base64.b64decode(settings.BASE64_ENCODED_SIGNING_KEY_SCUM)
+        key = RSA.importKey(key_data)
+
+        data = json.dumps(payload).encode("utf8")
+
+        digest = SHA256.new()
+        digest.update(data)
+
+        use_salt = False
+        if use_salt:
+            rndfile = Random.new()
+            salt_data = rndfile.read(64)
+            salt = base64.b64encode(nonce_data)
+
+            digest.update(salt_data)
+            response['X-Salt'] = nonce
+
+        signer = PKCS1_v1_5.new(key)
+        signature = signer.sign(digest)
+        response['X-Signature'] = base64.b64encode(signature)
+
+    return response
+
+def verify_receipt_jelly(request):
+    data = {
+        'receipt-data': request.body.strip().decode("utf-8"),
+        'password': settings.APP_SPECIFIC_SHARED_SECRET_JELLY
+    }
+    response = requests.post(settings.RECEIPT_VERIFICATION_URL_JELLY, data=json.dumps(data))
+    payload = response.json()
+    response = JSONResponse(payload)
+
+    # If signing key is available, sign the payload to detect potential tampering.
+    if settings.BASE64_ENCODED_SIGNING_KEY_JELLY:
+        key_data = base64.b64decode(settings.BASE64_ENCODED_SIGNING_KEY_JELLY)
+        key = RSA.importKey(key_data)
+
+        data = json.dumps(payload).encode("utf8")
+
+        digest = SHA256.new()
+        digest.update(data)
+
+        use_salt = False
+        if use_salt:
+            rndfile = Random.new()
+            salt_data = rndfile.read(64)
+            salt = base64.b64encode(nonce_data)
+
+            digest.update(salt_data)
+            response['X-Salt'] = nonce
+
+        signer = PKCS1_v1_5.new(key)
+        signature = signer.sign(digest)
+        response['X-Signature'] = base64.b64encode(signature)
+
+    return response
+
